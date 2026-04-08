@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+"use client";
+import { useState, useRef, useEffect } from 'react';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
 import { UploadCloud, FileVideo, FileImage, Loader2, Download } from 'lucide-react';
@@ -9,8 +10,13 @@ export default function Home() {
   const [isConverting, setIsConverting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [outputUrl, setOutputUrl] = useState<string | null>(null);
-  const ffmpegRef = useRef(new FFmpeg());
-  const messageRef = useRef<HTMLParagraphElement | null>(null);
+  const ffmpegRef = useRef<any>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    ffmpegRef.current = new FFmpeg();
+    setIsReady(true);
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -21,19 +27,18 @@ export default function Home() {
   };
 
   const convertFile = async () => {
-    if (!file) return;
+    if (!file || !ffmpegRef.current) return;
     setIsConverting(true);
     setProgress(0);
     setOutputUrl(null);
 
     const ffmpeg = ffmpegRef.current;
-    ffmpeg.on('progress', ({ progress }) => {
+    ffmpeg.on('progress', ({ progress }: any) => {
       setProgress(Math.round(progress * 100));
     });
 
     try {
       if (!ffmpeg.loaded) {
-        // Load ffmpeg.wasm-core
         await ffmpeg.load({
           coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
           wasmURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm"
@@ -43,17 +48,11 @@ export default function Home() {
       const inputName = file.name;
       const outputName = `converted.${outputFormat}`;
 
-      // Write file to FFmpeg virtual file system
       await ffmpeg.writeFile(inputName, await fetchFile(file));
-
-      // Run FFmpeg command
       await ffmpeg.exec(['-i', inputName, outputName]);
-
-      // Read the result
       const data = await ffmpeg.readFile(outputName);
       
-      // Create a URL for downloading
-      const url = URL.createObjectURL(new Blob([(data as Uint8Array).buffer]));
+      const url = URL.createObjectURL(new Blob([data as any]));
       setOutputUrl(url);
     } catch (error) {
       console.error("Conversion error:", error);
@@ -62,6 +61,8 @@ export default function Home() {
       setIsConverting(false);
     }
   };
+
+  if (!isReady) return null;
 
   return (
     <main className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
@@ -72,7 +73,6 @@ export default function Home() {
         </div>
 
         <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-          {/* Upload Area */}
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-blue-500 transition-colors relative">
             <input 
               type="file" 
@@ -95,7 +95,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* Controls */}
           <div className="mt-8 flex flex-col sm:flex-row gap-4 items-end">
             <div className="flex-1 w-full">
               <label className="block text-sm font-medium text-gray-700 mb-2">Convert to format</label>
@@ -133,7 +132,6 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Progress & Result */}
           {isConverting && (
             <div className="mt-8">
               <div className="flex justify-between text-sm font-medium text-gray-900 mb-2">
