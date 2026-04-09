@@ -20,7 +20,6 @@ export default function Home() {
   useEffect(() => {
     setMounted(true);
     ffmpegRef.current = new FFmpeg();
-    // Handle logging for debugging
     ffmpegRef.current.on('log', ({ message }: any) => {
       console.log('FFmpeg Log:', message);
     });
@@ -63,9 +62,7 @@ export default function Home() {
 
     const ffmpeg = ffmpegRef.current;
     
-    // Make sure we attach the progress listener properly
     ffmpeg.on('progress', ({ progress, time }: any) => {
-      console.log("Progress:", progress, "Time:", time);
       if (progress >= 0 && progress <= 1) {
         setProgress(Math.round(progress * 100));
       }
@@ -73,35 +70,29 @@ export default function Home() {
 
     try {
       if (!ffmpeg.loaded) {
-        console.log("Loading FFmpeg...");
+        // Use the multi-threaded worker but load the single threaded core 
+        // Or just load the standard wasm. Without COEP headers, we MUST use 
+        // single-threaded ffmpeg that doesn't require SharedArrayBuffer
         await ffmpeg.load({
           coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
           wasmURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm"
         });
-        console.log("FFmpeg loaded successfully.");
       }
 
-      // Safe filename without spaces or special characters
       const safeInputName = 'input_file' + file.name.substring(file.name.lastIndexOf('.'));
       const outputName = `converted.${outputFormat}`;
 
-      console.log("Writing file to FFmpeg FS...");
       await ffmpeg.writeFile(safeInputName, await fetchFile(file));
       
       const args = ['-i', safeInputName];
       if (['mp4', 'webm'].includes(outputFormat)) {
         args.push('-preset', 'ultrafast');
-        // Removed -threads 4 as it can cause deadlocks/hangs in the single-threaded wasm build
       }
       args.push(outputName);
 
-      console.log("Executing FFmpeg with args:", args);
       await ffmpeg.exec(args);
-      
-      console.log("Reading output file...");
       const data = await ffmpeg.readFile(outputName);
       
-      console.log("Creating download URL...");
       const url = URL.createObjectURL(new Blob([data as any]));
       setOutputUrl(url);
     } catch (error) {
@@ -121,7 +112,6 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center py-16 px-4 sm:px-6 lg:px-8 font-sans transition-colors duration-300">
       
-      {/* Theme Toggle */}
       {mounted && (
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -134,7 +124,6 @@ export default function Home() {
 
       <div className="max-w-3xl w-full space-y-10">
         
-        {/* Header */}
         <div className="text-center space-y-4">
           <div className="inline-flex items-center justify-center p-3 bg-indigo-100 dark:bg-indigo-900/50 rounded-2xl mb-4 transition-colors">
             <RefreshCw className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
@@ -147,10 +136,8 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Main Card */}
         <div className="bg-white dark:bg-slate-900/80 backdrop-blur-sm p-8 md:p-10 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 transition-all">
           
-          {/* Dropzone */}
           <div 
             className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-200 ease-in-out ${
               isDragActive 
@@ -184,7 +171,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* Controls */}
           <div className="mt-8 flex flex-col md:flex-row gap-6 items-end">
             <div className="flex-1 w-full">
               <label className="flex items-center text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 transition-colors">
@@ -230,7 +216,6 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Progress Bar */}
           {isConverting && (
             <div className="mt-8 animate-in slide-in-from-bottom-4 duration-300">
               <div className="flex justify-between text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
@@ -248,7 +233,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Success State */}
           {outputUrl && !isConverting && (
             <div className="mt-8 p-6 bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-bottom-4 duration-300">
               <div className="flex items-center gap-3 text-emerald-800 dark:text-emerald-400">
@@ -269,8 +253,18 @@ export default function Home() {
           )}
         </div>
         
-        {/* SEO / FAQ Section */}
-        <div className="max-w-4xl w-full mt-24 text-slate-700 dark:text-slate-300 space-y-12 pb-12 transition-colors">
+        {/* Google AdSense Display Ad Banner */}
+        <div className="w-full bg-slate-100 dark:bg-slate-900/50 rounded-2xl overflow-hidden min-h-[100px] flex items-center justify-center mt-8 border border-slate-200 dark:border-slate-800">
+           <ins className="adsbygoogle"
+             style={{ display: "block", width: "100%", height: "90px" }}
+             data-ad-client="ca-pub-6382699321234354"
+             data-ad-slot="YOUR_AD_SLOT_ID"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+           <script dangerouslySetInnerHTML={{ __html: `(adsbygoogle = window.adsbygoogle || []).push({});` }}></script>
+        </div>
+        
+        <div className="max-w-4xl w-full mt-16 text-slate-700 dark:text-slate-300 space-y-12 pb-12 transition-colors">
           <section> 
             <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-50 mb-4">Why use our Free Media Converter?</h2> 
             <p className="mb-4 leading-relaxed">Most online video and image converters force you to upload your files to their servers. This is slow, eats up your bandwidth, and poses a massive privacy risk. Our converter runs entirely <strong className="dark:text-white">inside your browser</strong> using WebAssembly technology. Your files never leave your device, ensuring 100% privacy and lightning-fast local conversion speeds.</p> 
