@@ -2,7 +2,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
-import { UploadCloud, FileVideo, FileImage, Loader2, Download, RefreshCw, Settings } from 'lucide-react';
+import { UploadCloud, FileVideo, FileImage, Loader2, Download, RefreshCw, Settings, Sun, Moon } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -13,8 +14,11 @@ export default function Home() {
   const [isDragActive, setIsDragActive] = useState(false);
   const ffmpegRef = useRef<any>(null);
   const [isReady, setIsReady] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     ffmpegRef.current = new FFmpeg();
     setIsReady(true);
   }, []);
@@ -71,7 +75,6 @@ export default function Home() {
 
       await ffmpeg.writeFile(inputName, await fetchFile(file));
       
-      // Speed up conversion with specific FFmpeg arguments
       const args = ['-i', inputName];
       if (['mp4', 'webm'].includes(outputFormat)) {
         args.push('-preset', 'ultrafast', '-threads', '4');
@@ -92,39 +95,51 @@ export default function Home() {
   };
 
   if (!isReady) return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-      <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+      <Loader2 className="w-10 h-10 animate-spin text-indigo-600 dark:text-indigo-400" />
     </div>
   );
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col items-center py-16 px-4 sm:px-6 lg:px-8 font-sans">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center py-16 px-4 sm:px-6 lg:px-8 font-sans transition-colors duration-300">
+      
+      {/* Theme Toggle */}
+      {mounted && (
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="absolute top-4 right-4 p-2 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors shadow-sm"
+          aria-label="Toggle Dark Mode"
+        >
+          {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </button>
+      )}
+
       <div className="max-w-3xl w-full space-y-10">
         
         {/* Header */}
         <div className="text-center space-y-4">
-          <div className="inline-flex items-center justify-center p-3 bg-indigo-100 rounded-2xl mb-4">
-            <RefreshCw className="w-8 h-8 text-indigo-600" />
+          <div className="inline-flex items-center justify-center p-3 bg-indigo-100 dark:bg-indigo-900/50 rounded-2xl mb-4 transition-colors">
+            <RefreshCw className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight transition-colors">
             Media Converter
           </h1>
-          <p className="text-lg text-slate-600 max-w-xl mx-auto leading-relaxed">
+          <p className="text-lg text-slate-600 dark:text-slate-400 max-w-xl mx-auto leading-relaxed transition-colors">
             Fast, private, and free. Convert your images and videos directly in your browser without uploading to any servers.
           </p>
         </div>
 
         {/* Main Card */}
-        <div className="bg-white p-8 md:p-10 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 transition-all">
+        <div className="bg-white dark:bg-slate-900/80 backdrop-blur-sm p-8 md:p-10 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 transition-all">
           
           {/* Dropzone */}
           <div 
             className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-200 ease-in-out ${
               isDragActive 
-                ? 'border-indigo-500 bg-indigo-50/50 scale-[1.02]' 
+                ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20 scale-[1.02]' 
                 : file 
-                  ? 'border-slate-200 bg-slate-50' 
-                  : 'border-slate-300 hover:border-indigo-400 hover:bg-slate-50'
+                  ? 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50' 
+                  : 'border-slate-300 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-slate-50 dark:hover:bg-slate-800/50'
             }`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -137,16 +152,16 @@ export default function Home() {
               accept="video/*,image/*"
             />
             {file ? (
-              <div className="flex flex-col items-center text-indigo-600 animate-in fade-in zoom-in duration-300">
+              <div className="flex flex-col items-center text-indigo-600 dark:text-indigo-400 animate-in fade-in zoom-in duration-300">
                 {file.type.startsWith('video') ? <FileVideo className="w-16 h-16 mb-4 drop-shadow-sm" /> : <FileImage className="w-16 h-16 mb-4 drop-shadow-sm" />}
-                <span className="font-semibold text-lg text-slate-800">{file.name}</span>
-                <span className="text-sm text-slate-500 mt-1 font-medium bg-slate-200/50 px-3 py-1 rounded-full">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                <span className="font-semibold text-lg text-slate-800 dark:text-slate-200">{file.name}</span>
+                <span className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium bg-slate-200/50 dark:bg-slate-800 px-3 py-1 rounded-full">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
               </div>
             ) : (
-              <div className="flex flex-col items-center text-slate-500 pointer-events-none">
-                <UploadCloud className={`w-16 h-16 mb-4 transition-colors ${isDragActive ? 'text-indigo-500' : 'text-slate-400'}`} />
-                <span className="font-semibold text-lg text-slate-700">Drag & drop your file here</span>
-                <span className="text-sm mt-2 text-slate-500">or click to browse from your device</span>
+              <div className="flex flex-col items-center text-slate-500 dark:text-slate-400 pointer-events-none">
+                <UploadCloud className={`w-16 h-16 mb-4 transition-colors ${isDragActive ? 'text-indigo-500 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`} />
+                <span className="font-semibold text-lg text-slate-700 dark:text-slate-300">Drag & drop your file here</span>
+                <span className="text-sm mt-2 text-slate-500 dark:text-slate-400">or click to browse from your device</span>
               </div>
             )}
           </div>
@@ -154,15 +169,15 @@ export default function Home() {
           {/* Controls */}
           <div className="mt-8 flex flex-col md:flex-row gap-6 items-end">
             <div className="flex-1 w-full">
-              <label className="flex items-center text-sm font-semibold text-slate-700 mb-2">
-                <Settings className="w-4 h-4 mr-2 text-slate-500" />
+              <label className="flex items-center text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 transition-colors">
+                <Settings className="w-4 h-4 mr-2 text-slate-500 dark:text-slate-400" />
                 Convert to format
               </label>
               <div className="relative">
                 <select 
                   value={outputFormat} 
                   onChange={(e) => setOutputFormat(e.target.value)}
-                  className="block w-full appearance-none rounded-xl border-slate-200 bg-slate-50 py-3 px-4 pr-8 text-slate-700 font-medium shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer"
+                  className="block w-full appearance-none rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-3 px-4 pr-8 text-slate-700 dark:text-slate-200 font-medium shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer"
                 >
                   <optgroup label="Video">
                     <option value="mp4">MP4</option>
@@ -175,7 +190,7 @@ export default function Home() {
                     <option value="webp">WEBP</option>
                   </optgroup>
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500 dark:text-slate-400">
                   <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                 </div>
               </div>
@@ -184,7 +199,7 @@ export default function Home() {
             <button
               onClick={convertFile}
               disabled={!file || isConverting}
-              className="w-full md:w-auto px-8 py-3 bg-indigo-600 text-white font-semibold rounded-xl shadow-md hover:bg-indigo-700 hover:shadow-lg focus:ring-4 focus:ring-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center min-w-[160px]"
+              className="w-full md:w-auto px-8 py-3 bg-indigo-600 text-white font-semibold rounded-xl shadow-md hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 hover:shadow-lg focus:ring-4 focus:ring-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center min-w-[160px]"
             >
               {isConverting ? (
                 <>
@@ -200,13 +215,13 @@ export default function Home() {
           {/* Progress Bar */}
           {isConverting && (
             <div className="mt-8 animate-in slide-in-from-bottom-4 duration-300">
-              <div className="flex justify-between text-sm font-semibold text-slate-700 mb-2">
+              <div className="flex justify-between text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                 <span>Processing your file...</span>
-                <span className="text-indigo-600">{progress}%</span>
+                <span className="text-indigo-600 dark:text-indigo-400">{progress}%</span>
               </div>
-              <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden shadow-inner">
+              <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden shadow-inner">
                 <div 
-                  className="bg-indigo-600 h-full rounded-full transition-all duration-300 ease-out relative" 
+                  className="bg-indigo-600 dark:bg-indigo-500 h-full rounded-full transition-all duration-300 ease-out relative" 
                   style={{ width: `${progress}%` }}
                 >
                   <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
@@ -217,9 +232,9 @@ export default function Home() {
 
           {/* Success State */}
           {outputUrl && !isConverting && (
-            <div className="mt-8 p-6 bg-emerald-50 rounded-2xl border border-emerald-100 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-bottom-4 duration-300">
-              <div className="flex items-center gap-3 text-emerald-800">
-                <div className="p-2 bg-emerald-100 rounded-full">
+            <div className="mt-8 p-6 bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-bottom-4 duration-300">
+              <div className="flex items-center gap-3 text-emerald-800 dark:text-emerald-400">
+                <div className="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-full">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
                 </div>
                 <h3 className="font-semibold text-lg">Conversion Complete!</h3>
@@ -227,7 +242,7 @@ export default function Home() {
               <a 
                 href={outputUrl} 
                 download={`converted.${outputFormat}`}
-                className="w-full sm:w-auto px-6 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 flex items-center justify-center transition-all shadow-md hover:shadow-lg"
+                className="w-full sm:w-auto px-6 py-3 bg-emerald-600 dark:bg-emerald-500 text-white font-semibold rounded-xl hover:bg-emerald-700 dark:hover:bg-emerald-600 flex items-center justify-center transition-all shadow-md hover:shadow-lg"
               >
                 <Download className="w-5 h-5 mr-2" />
                 Download File
@@ -236,32 +251,33 @@ export default function Home() {
           )}
         </div>
         
-        <div className="max-w-4xl w-full mt-24 text-slate-700 space-y-12 pb-12">
+        {/* SEO / FAQ Section */}
+        <div className="max-w-4xl w-full mt-24 text-slate-700 dark:text-slate-300 space-y-12 pb-12 transition-colors">
           <section> 
-            <h2 className="text-2xl font-bold text-slate-900 mb-4">Why use our Free Media Converter?</h2> 
-            <p className="mb-4 leading-relaxed">Most online video and image converters force you to upload your files to their servers. This is slow, eats up your bandwidth, and poses a massive privacy risk. Our converter runs entirely <strong>inside your browser</strong> using WebAssembly technology. Your files never leave your device, ensuring 100% privacy and lightning-fast local conversion speeds.</p> 
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-50 mb-4">Why use our Free Media Converter?</h2> 
+            <p className="mb-4 leading-relaxed">Most online video and image converters force you to upload your files to their servers. This is slow, eats up your bandwidth, and poses a massive privacy risk. Our converter runs entirely <strong className="dark:text-white">inside your browser</strong> using WebAssembly technology. Your files never leave your device, ensuring 100% privacy and lightning-fast local conversion speeds.</p> 
           </section> 
           <section> 
-            <h2 className="text-2xl font-bold text-slate-900 mb-4">Frequently Asked Questions</h2> 
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-50 mb-4">Frequently Asked Questions</h2> 
             <div className="space-y-6"> 
               <div> 
-                <h3 className="text-lg font-semibold text-slate-800">Is this tool completely free?</h3> 
+                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Is this tool completely free?</h3> 
                 <p className="mt-1">Yes! There are no hidden fees, no watermarks, and no premium subscriptions required.</p> 
               </div> 
               <div> 
-                <h3 className="text-lg font-semibold text-slate-800">Which formats are supported?</h3> 
+                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Which formats are supported?</h3> 
                 <p className="mt-1">We currently support popular video formats like MP4, WEBM, and GIF, as well as image formats including JPG, PNG, and WEBP.</p> 
               </div> 
               <div> 
-                <h3 className="text-lg font-semibold text-slate-800">Do you store my files?</h3> 
+                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Do you store my files?</h3> 
                 <p className="mt-1">No. All processing happens locally on your computer or phone. We do not have servers to store your data, guaranteeing your privacy.</p> 
               </div> 
             </div> 
           </section>
         </div>
 
-        <div className="text-center text-sm text-slate-400 mt-8">
-          Powered by WebAssembly • <a href="https://buymeacoffee.com/mapsize17" target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:text-indigo-600 underline underline-offset-2 transition-colors">Buy me a coffee ☕</a>
+        <div className="text-center text-sm text-slate-400 dark:text-slate-500 mt-8 transition-colors">
+          Powered by WebAssembly • <a href="https://buymeacoffee.com/mapsize17" target="_blank" rel="noopener noreferrer" className="text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 underline underline-offset-2 transition-colors">Buy me a coffee ☕</a>
         </div>
       </div>
     </main>
