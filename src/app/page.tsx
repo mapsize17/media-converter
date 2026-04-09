@@ -70,14 +70,22 @@ export default function Home() {
       const outputName = `converted.${outputFormat}`;
 
       await ffmpeg.writeFile(inputName, await fetchFile(file));
-      await ffmpeg.exec(['-i', inputName, outputName]);
+      
+      // Speed up conversion with specific FFmpeg arguments
+      const args = ['-i', inputName];
+      if (['mp4', 'webm'].includes(outputFormat)) {
+        args.push('-preset', 'ultrafast', '-threads', '4');
+      }
+      args.push(outputName);
+
+      await ffmpeg.exec(args);
       const data = await ffmpeg.readFile(outputName);
       
       const url = URL.createObjectURL(new Blob([data as any]));
       setOutputUrl(url);
     } catch (error) {
       console.error("Conversion error:", error);
-      alert("Error during conversion.");
+      alert("Error during conversion. Check console for details.");
     } finally {
       setIsConverting(false);
     }
@@ -228,10 +236,34 @@ export default function Home() {
           )}
         </div>
         
+        <div className="max-w-4xl w-full mt-24 text-slate-700 space-y-12 pb-12">
+          <section> 
+            <h2 className="text-2xl font-bold text-slate-900 mb-4">Why use our Free Media Converter?</h2> 
+            <p className="mb-4 leading-relaxed">Most online video and image converters force you to upload your files to their servers. This is slow, eats up your bandwidth, and poses a massive privacy risk. Our converter runs entirely <strong>inside your browser</strong> using WebAssembly technology. Your files never leave your device, ensuring 100% privacy and lightning-fast local conversion speeds.</p> 
+          </section> 
+          <section> 
+            <h2 className="text-2xl font-bold text-slate-900 mb-4">Frequently Asked Questions</h2> 
+            <div className="space-y-6"> 
+              <div> 
+                <h3 className="text-lg font-semibold text-slate-800">Is this tool completely free?</h3> 
+                <p className="mt-1">Yes! There are no hidden fees, no watermarks, and no premium subscriptions required.</p> 
+              </div> 
+              <div> 
+                <h3 className="text-lg font-semibold text-slate-800">Which formats are supported?</h3> 
+                <p className="mt-1">We currently support popular video formats like MP4, WEBM, and GIF, as well as image formats including JPG, PNG, and WEBP.</p> 
+              </div> 
+              <div> 
+                <h3 className="text-lg font-semibold text-slate-800">Do you store my files?</h3> 
+                <p className="mt-1">No. All processing happens locally on your computer or phone. We do not have servers to store your data, guaranteeing your privacy.</p> 
+              </div> 
+            </div> 
+          </section>
+        </div>
+
         <div className="text-center text-sm text-slate-400 mt-8">
-          Powered by WebAssembly • <a href="https://buymeacoffee.com/mapsize17" target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:text-indigo-600 underline underline-offset-2 transition-colors">Buy me a coffee ☕</a> • 100% Client-Side Processing
+          Powered by WebAssembly • <a href="https://buymeacoffee.com/mapsize17" target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:text-indigo-600 underline underline-offset-2 transition-colors">Buy me a coffee ☕</a>
         </div>
       </div>
-    <div className="max-w-4xl w-full mt-24 text-slate-700 space-y-12 pb-12"><section> <h2 className="text-2xl font-bold text-slate-900 mb-4">Why use our Free Media Converter?</h2> <p className="mb-4 leading-relaxed">Most online video and image converters force you to upload your files to their servers. This is slow, eats up your bandwidth, and poses a massive privacy risk. Our converter runs entirely <strong>inside your browser</strong> using WebAssembly technology. Your files never leave your device, ensuring 100% privacy and lightning-fast local conversion speeds.</p> </section> <section> <h2 className="text-2xl font-bold text-slate-900 mb-4">Frequently Asked Questions</h2> <div className="space-y-6"> <div> <h3 className="text-lg font-semibold text-slate-800">Is this tool completely free?</h3> <p className="mt-1">Yes! There are no hidden fees, no watermarks, and no premium subscriptions required.</p> </div> <div> <h3 className="text-lg font-semibold text-slate-800">Which formats are supported?</h3> <p className="mt-1">We currently support popular video formats like MP4, WEBM, and GIF, as well as image formats including JPG, PNG, and WEBP.</p> </div> <div> <h3 className="text-lg font-semibold text-slate-800">Do you store my files?</h3> <p className="mt-1">No. All processing happens locally on your computer or phone. We do not have servers to store your data, guaranteeing your privacy.</p> </div> </div> </section></div></main>
+    </main>
   );
 }
