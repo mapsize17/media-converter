@@ -29,7 +29,7 @@ export default function RootLayout({
         {/* Google AdSense Script - Replace CA_PUB_ID with your actual ID */}
         <Script
           async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6382699321234354"
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
