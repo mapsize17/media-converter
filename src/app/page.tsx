@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile } from '@ffmpeg/util';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import { UploadCloud, FileVideo, FileImage, Loader2, Download, RefreshCw, Settings, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
@@ -23,7 +23,23 @@ export default function Home() {
     ffmpegRef.current.on('log', ({ message }: any) => {
       console.log('FFmpeg Log:', message);
     });
-    setIsReady(true);
+    
+    // Auto-load FFmpeg on mount to avoid doing it during conversion
+    const loadFFmpeg = async () => {
+      try {
+        const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+        await ffmpegRef.current.load({
+          coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+          wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+        });
+        setIsReady(true);
+        console.log("FFmpeg core loaded successfully via BlobURLs.");
+      } catch (e) {
+        console.error("Failed to load FFmpeg:", e);
+      }
+    };
+    
+    loadFFmpeg();
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,32 +71,24 @@ export default function Home() {
   };
 
   const convertFile = async () => {
-    if (!file || !ffmpegRef.current) return;
+    if (!file || !ffmpegRef.current || !isReady) return;
     setIsConverting(true);
     setProgress(0);
     setOutputUrl(null);
 
     const ffmpeg = ffmpegRef.current;
     
-    ffmpeg.on('progress', ({ progress, time }: any) => {
+    ffmpeg.on('progress', ({ progress }: any) => {
       if (progress >= 0 && progress <= 1) {
         setProgress(Math.round(progress * 100));
       }
     });
 
     try {
-      if (!ffmpeg.loaded) {
-        console.log("Loading FFmpeg 8-bit core (single threaded)...");
-        // Using the strictly single-threaded 8-bit core to completely avoid the SharedArrayBuffer / payload error
-        await ffmpeg.load({
-          coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
-          wasmURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm"
-        });
-      }
-
       const safeInputName = 'input_file' + file.name.substring(file.name.lastIndexOf('.'));
       const outputName = `converted.${outputFormat}`;
 
+      console.log("Writing file to FS...");
       await ffmpeg.writeFile(safeInputName, await fetchFile(file));
       
       const args = ['-i', safeInputName];
@@ -89,9 +97,11 @@ export default function Home() {
       }
       args.push(outputName);
 
+      console.log("Starting execution...");
       await ffmpeg.exec(args);
-      const data = await ffmpeg.readFile(outputName);
+      console.log("Execution finished.");
       
+      const data = await ffmpeg.readFile(outputName);
       const url = URL.createObjectURL(new Blob([data as any]));
       setOutputUrl(url);
     } catch (error) {
@@ -103,8 +113,9 @@ export default function Home() {
   };
 
   if (!isReady) return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center space-y-4">
       <Loader2 className="w-10 h-10 animate-spin text-indigo-600 dark:text-indigo-400" />
+      <p className="text-slate-500 font-medium animate-pulse">Initializing Converter Engine...</p>
     </div>
   );
 
