@@ -20,6 +20,10 @@ export default function Home() {
   useEffect(() => {
     setMounted(true);
     ffmpegRef.current = new FFmpeg();
+    // Handle logging for debugging
+    ffmpegRef.current.on('log', ({ message }: any) => {
+      console.log('FFmpeg Log:', message);
+    });
     setIsReady(true);
   }, []);
 
@@ -58,32 +62,46 @@ export default function Home() {
     setOutputUrl(null);
 
     const ffmpeg = ffmpegRef.current;
-    ffmpeg.on('progress', ({ progress }: any) => {
-      setProgress(Math.round(progress * 100));
+    
+    // Make sure we attach the progress listener properly
+    ffmpeg.on('progress', ({ progress, time }: any) => {
+      console.log("Progress:", progress, "Time:", time);
+      if (progress >= 0 && progress <= 1) {
+        setProgress(Math.round(progress * 100));
+      }
     });
 
     try {
       if (!ffmpeg.loaded) {
+        console.log("Loading FFmpeg...");
         await ffmpeg.load({
           coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
           wasmURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm"
         });
+        console.log("FFmpeg loaded successfully.");
       }
 
-      const inputName = file.name;
+      // Safe filename without spaces or special characters
+      const safeInputName = 'input_file' + file.name.substring(file.name.lastIndexOf('.'));
       const outputName = `converted.${outputFormat}`;
 
-      await ffmpeg.writeFile(inputName, await fetchFile(file));
+      console.log("Writing file to FFmpeg FS...");
+      await ffmpeg.writeFile(safeInputName, await fetchFile(file));
       
-      const args = ['-i', inputName];
+      const args = ['-i', safeInputName];
       if (['mp4', 'webm'].includes(outputFormat)) {
-        args.push('-preset', 'ultrafast', '-threads', '4');
+        args.push('-preset', 'ultrafast');
+        // Removed -threads 4 as it can cause deadlocks/hangs in the single-threaded wasm build
       }
       args.push(outputName);
 
+      console.log("Executing FFmpeg with args:", args);
       await ffmpeg.exec(args);
+      
+      console.log("Reading output file...");
       const data = await ffmpeg.readFile(outputName);
       
+      console.log("Creating download URL...");
       const url = URL.createObjectURL(new Blob([data as any]));
       setOutputUrl(url);
     } catch (error) {
