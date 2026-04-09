@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile, toBlobURL } from '@ffmpeg/util';
+import { fetchFile } from '@ffmpeg/util';
 import { UploadCloud, FileVideo, FileImage, Loader2, Download, RefreshCw, Settings, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
@@ -20,26 +20,7 @@ export default function Home() {
   useEffect(() => {
     setMounted(true);
     ffmpegRef.current = new FFmpeg();
-    ffmpegRef.current.on('log', ({ message }: any) => {
-      console.log('FFmpeg Log:', message);
-    });
-    
-    // Auto-load FFmpeg on mount to avoid doing it during conversion
-    const loadFFmpeg = async () => {
-      try {
-        const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
-        await ffmpegRef.current.load({
-          coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-          wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-        });
-        setIsReady(true);
-        console.log("FFmpeg core loaded successfully via BlobURLs.");
-      } catch (e) {
-        console.error("Failed to load FFmpeg:", e);
-      }
-    };
-    
-    loadFFmpeg();
+    setIsReady(true);
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,10 +66,16 @@ export default function Home() {
     });
 
     try {
+      if (!ffmpeg.loaded) {
+        await ffmpeg.load({
+          coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
+          wasmURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm"
+        });
+      }
+
       const safeInputName = 'input_file' + file.name.substring(file.name.lastIndexOf('.'));
       const outputName = `converted.${outputFormat}`;
 
-      console.log("Writing file to FS...");
       await ffmpeg.writeFile(safeInputName, await fetchFile(file));
       
       const args = ['-i', safeInputName];
@@ -97,10 +84,7 @@ export default function Home() {
       }
       args.push(outputName);
 
-      console.log("Starting execution...");
       await ffmpeg.exec(args);
-      console.log("Execution finished.");
-      
       const data = await ffmpeg.readFile(outputName);
       const url = URL.createObjectURL(new Blob([data as any]));
       setOutputUrl(url);
