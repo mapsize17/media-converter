@@ -280,7 +280,7 @@ export default function Home() {
         </div>
 
         <div className="text-center text-sm text-slate-400 dark:text-slate-500 mt-8 transition-colors">
-          Powered by WebAssembly • • <a href="/blog" className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">Read our Privacy Guide</a> • <a href="https://buymeacoffee.com/mapsize17" target="_blank" rel="noopener noreferrer" className="text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 underline underline-offset-2 transition-colors">Buy me a coffee ☕</a>
+          Powered by WebAssembly • • <a href="/blog" className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">Read our Privacy Guide</a> • <a href="https://buymeacoffee.com/mapsize17" target="_blank" rel="noopener noreferrer" className="text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 underline underline-offset-2 transition-colors">Buy me a coffee ☕</a> • <a href="/blog" className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">Privacy Blog</a>
         </div>
       </div>
     </main>
