@@ -70,9 +70,8 @@ export default function Home() {
 
     try {
       if (!ffmpeg.loaded) {
-        // Use the multi-threaded worker but load the single threaded core 
-        // Or just load the standard wasm. Without COEP headers, we MUST use 
-        // single-threaded ffmpeg that doesn't require SharedArrayBuffer
+        console.log("Loading FFmpeg 8-bit core (single threaded)...");
+        // Using the strictly single-threaded 8-bit core to completely avoid the SharedArrayBuffer / payload error
         await ffmpeg.load({
           coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
           wasmURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm"
