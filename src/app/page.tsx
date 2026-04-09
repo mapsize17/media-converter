@@ -17,10 +17,39 @@ export default function Home() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
+  // Initialize FFmpeg
   useEffect(() => {
     setMounted(true);
-    ffmpegRef.current = new FFmpeg();
-    setIsReady(true);
+    const loadFFmpeg = async () => {
+      const ffmpeg = new FFmpeg();
+      ffmpegRef.current = ffmpeg;
+      
+      ffmpeg.on('log', ({ message }: any) => {
+        console.log('FFmpeg Log:', message);
+      });
+      
+      ffmpeg.on('progress', ({ progress, time }: any) => {
+        console.log("FFmpeg Progress:", progress);
+        if (progress >= 0 && progress <= 1) {
+          setProgress(Math.round(progress * 100));
+        }
+      });
+
+      try {
+        console.log("Loading FFmpeg core...");
+        // Load the specific 8-bit core to avoid SharedArrayBuffer issues entirely
+        await ffmpeg.load({
+          coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
+          wasmURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm"
+        });
+        console.log("FFmpeg loaded.");
+        setIsReady(true);
+      } catch (err) {
+        console.error("Failed to load FFmpeg:", err);
+      }
+    };
+    
+    loadFFmpeg();
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,36 +87,26 @@ export default function Home() {
     setOutputUrl(null);
 
     const ffmpeg = ffmpegRef.current;
-    
-    ffmpeg.on('progress', ({ progress }: any) => {
-      if (progress >= 0 && progress <= 1) {
-        setProgress(Math.round(progress * 100));
-      }
-    });
 
     try {
-      if (!ffmpeg.loaded) {
-        await ffmpeg.load({
-          coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
-          wasmURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm"
-        });
-      }
+      // Ensure we don't pass weird filenames to FFmpeg's virtual FS
+      const ext = file.name.split('.').pop() || 'tmp';
+      const safeInputName = `input.${ext}`;
+      const outputName = `output.${outputFormat}`;
 
-      const safeInputName = 'input_file' + file.name.substring(file.name.lastIndexOf('.'));
-      const outputName = `converted.${outputFormat}`;
-
+      console.log(`Writing ${safeInputName} to FS...`);
       await ffmpeg.writeFile(safeInputName, await fetchFile(file));
       
-      const args = ['-i', safeInputName];
-      if (['mp4', 'webm'].includes(outputFormat)) {
-        args.push('-preset', 'ultrafast');
-      }
-      args.push(outputName);
-
-      await ffmpeg.exec(args);
+      console.log(`Executing conversion to ${outputName}...`);
+      // Use extremely basic, safe args to guarantee execution completion
+      await ffmpeg.exec(['-i', safeInputName, outputName]);
+      
+      console.log("Conversion complete, reading file...");
       const data = await ffmpeg.readFile(outputName);
+      
       const url = URL.createObjectURL(new Blob([data as any]));
       setOutputUrl(url);
+      setProgress(100);
     } catch (error) {
       console.error("Conversion error:", error);
       alert("Error during conversion. Check console for details.");
@@ -99,7 +118,7 @@ export default function Home() {
   if (!isReady) return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center space-y-4">
       <Loader2 className="w-10 h-10 animate-spin text-indigo-600 dark:text-indigo-400" />
-      <p className="text-slate-500 font-medium animate-pulse">Initializing Converter Engine...</p>
+      <p className="text-slate-500 font-medium animate-pulse">Downloading WebAssembly Core (~25MB)...</p>
     </div>
   );
 
