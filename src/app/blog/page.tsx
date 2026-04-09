@@ -32,10 +32,25 @@ export default function BlogPost() {
             <p className="text-slate-700 dark:text-slate-300 mb-6">
               When a service is free, you are usually the product. Traditional media converters operate by taking the file you upload, sending it to their remote cloud servers, processing it, and sending it back. This creates three massive problems:
             </p>
-            <ul className="space-y-4 mb-8 text-slate-700 dark:text-slate-300">
-              <li className="flex items-start"><span className="font-bold text-indigo-600 dark:text-indigo-400 mr-2">1.</span> <strong>Privacy Risks:</strong> When you upload a personal video, family photo, or confidential work document, it sits on a random server. Even if the site claims they "delete files after 24 hours," there is no way to verify that. Data breaches happen constantly.</li>
-              <li className="flex items-start"><span className="font-bold text-indigo-600 dark:text-indigo-400 mr-2">2.</span> <strong>Bandwidth Waste:</strong> Uploading a 500MB 4K video takes time. Downloading the converted 450MB file takes more time. You are wasting gigabytes of data transferring files back and forth across the internet.</li>
-              <li className="flex items-start"><span className="font-bold text-indigo-600 dark:text-indigo-400 mr-2">3.</span> <strong>Server Queues:</strong> Because cloud servers are expensive, these free sites often put you in an artificial "queue" or slap a massive watermark on your video to force you to buy their premium subscription.</li>
+            <ul className="space-y-4 mb-8 text-slate-700 dark:text-slate-300 list-none pl-0">
+              <li className="flex items-start">
+                <span className="font-bold text-indigo-600 dark:text-indigo-400 mr-2 shrink-0">1.</span> 
+                <div>
+                  <strong>Privacy Risks:</strong> When you upload a personal video, family photo, or confidential work document, it sits on a random server. Even if the site claims they "delete files after 24 hours," there is no way to verify that. Data breaches happen constantly.
+                </div>
+              </li>
+              <li className="flex items-start">
+                <span className="font-bold text-indigo-600 dark:text-indigo-400 mr-2 shrink-0">2.</span> 
+                <div>
+                  <strong>Bandwidth Waste:</strong> Uploading a 500MB 4K video takes time. Downloading the converted 450MB file takes more time. You are wasting gigabytes of data transferring files back and forth across the internet.
+                </div>
+              </li>
+              <li className="flex items-start">
+                <span className="font-bold text-indigo-600 dark:text-indigo-400 mr-2 shrink-0">3.</span> 
+                <div>
+                  <strong>Server Queues:</strong> Because cloud servers are expensive, these free sites often put you in an artificial "queue" or slap a massive watermark on your video to force you to buy their premium subscription.
+                </div>
+              </li>
             </ul>
 
             <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-12 mb-4">The WebAssembly Revolution: 100% Local Conversion</h2>
