@@ -11,6 +11,7 @@ interface FileItem {
   progress: number;
   status: 'idle' | 'converting' | 'done' | 'error';
   outputUrl: string | null;
+  outputName?: string;
 }
 
 export default function Home() {
@@ -112,9 +113,11 @@ export default function Home() {
           const data = await ffmpeg.readFile(outputName);
           
           const url = URL.createObjectURL(new Blob([data as any]));
+          const baseName = currentFile.file.name.substring(0, currentFile.file.name.lastIndexOf('.')) || currentFile.file.name;
+          const finalOutputName = `${baseName}.${outputFormat}`;
           
           setFiles(prev => prev.map(f => 
-            f.id === currentFile.id ? { ...f, status: 'done', progress: 100, outputUrl: url } : f
+            f.id === currentFile.id ? { ...f, status: 'done', progress: 100, outputUrl: url, outputName: finalOutputName } : f
           ));
         } catch (err) {
           console.error(`Error converting ${currentFile.file.name}:`, err);
@@ -218,7 +221,7 @@ export default function Home() {
                       </div>
                     )}
                     {fileItem.status === 'done' && fileItem.outputUrl && (
-                      <a href={fileItem.outputUrl} download={`converted.${outputFormat}`} className="flex items-center text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1.5 rounded-lg transition-colors">
+                      <a href={fileItem.outputUrl} download={fileItem.outputName || `converted.${outputFormat}`} className="flex items-center text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1.5 rounded-lg transition-colors">
                         <Download className="w-4 h-4 mr-1.5" />
                         Download
                       </a>
